@@ -2,18 +2,25 @@
 
 一套 AI 协作场景下的项目管理规范 skill：让 AI 按统一机制管理项目全生命周期——立项访谈、精简目录、版本与产出物线、台账留痕、口径唯一性、会话开工/收工例程、交接与收尾复盘。
 
-规则提炼自多个真实项目的复盘，只包含项目管理机制，不含任何个人偏好与环境专属配置；可按团队习惯裁剪。
+采用 [Agent Skills](https://agentskills.io) 开放标准，**不绑定任何特定 AI 工具**：支持该标准的工具可直接安装；不支持的工具可当纯规则文档使用（见安装方式二）。规则提炼自多个真实项目的复盘，只包含项目管理机制，不含个人偏好与环境专属配置；可按团队习惯裁剪。
 
-## 安装（Claude Code）
+## 安装
 
-1. 将 `zmq-project-management/` 文件夹复制到：
-   - 个人级（所有项目生效）：`~/.claude/skills/`（Windows：`%USERPROFILE%\.claude\skills\`）
-   - 或项目级（仅该项目生效）：项目根的 `.claude/skills/`
-2. 新开会话即生效。验证：说"启动一个新项目"，或直接输入 `/zmq-project-management`。
+### 方式一：支持 Agent Skills 标准的 AI 工具
 
-## 在其他 AI 工具中使用
+把 `zmq-project-management/` 文件夹复制到你所用工具的 skills 目录，新会话即生效：
 
-skill 的触发机制是 Claude Code 专属的，但规则本身工具无关：把 `SKILL.md` 正文（frontmatter 以下部分）贴入你所用工具的规则文件（如 Codex 的 `AGENTS.md`），并把 `references/复盘模板.md` 放在项目可读取的位置即可。
+| 工具 | 个人级（所有项目生效） | 项目级（仅该项目生效） |
+| -- | -- | -- |
+| Claude Code | `~/.claude/skills/`（Windows：`%USERPROFILE%\.claude\skills\`） | 项目根 `.claude/skills/` |
+| 其他支持 Agent Skills 的工具 | 见该工具文档约定的 skills 目录 | 同左 |
+
+验证：对 AI 说"启动一个新项目"，或按你所用工具的 skill 调用方式（如 `/zmq-project-management`）。
+
+### 方式二：任何 AI 工具（通用，无需 skills 机制）
+
+- 把 `SKILL.md` 正文（frontmatter 以下部分）贴入你所用工具的规则文件——如 Codex 的 `AGENTS.md`、Cursor 的 rules 文件——或在会话开头把整个文件投喂给 AI。
+- 把 `references/复盘模板.md` 放在项目内 AI 可读取的位置（项目收尾时会用到）。
 
 ## 目录结构
 
@@ -34,4 +41,4 @@ zmq-project-management/
 
 ## 版本
 
-当前 v1.0（2026-07-17）。修改建议走仓库 Issue/PR；本地定制建议 fork 后自立版本线，升级时对照 CHANGELOG 合并。
+当前 v1.0（2026-07-17），修订历史见 `zmq-project-management/CHANGELOG.md`。修改建议走仓库 Issue/PR；本地定制建议 fork 后自立版本线，升级时对照 CHANGELOG 合并。
