@@ -68,6 +68,8 @@ skill 在三个时刻介入：
 
 所有记录都是项目目录里的普通 Markdown 文件，随时可人工翻看和修改。
 
+命令行可选项（AI 会在对应环节自动调用，也可手动执行）：`python zmq-project-management/scripts/init_project.py 项目名` 一键建项目骨架；`health_check.py 项目根` 一键体检；`check_terms.py` 交付前口径扫描。
+
 ## 目录结构
 
 ```
@@ -78,8 +80,12 @@ zmq-project-management/
     台账模板.md          建档模板（含填好示例）
     README模板.md        建档模板：总览+当前状态+指针表（含示例）
     启动卡模板.md        立项访谈的产出模板（含示例）
-  scripts/
-    check_terms.py      口径/禁用词一致性扫描器（标准库，无依赖）
+  scripts/              （均为标准库、无依赖，可直接运行）
+    init_project.py     一键建档：基础目录+README/台账骨架+自举行
+    health_check.py     项目体检：指针表指向/当前版唯一性/水位/表格空行
+    check_terms.py      口径/禁用词一致性扫描器
+  examples/
+    示例项目/            规范落地形态的迷你示例（可对照颗粒度）
   CHANGELOG.md          版本记录
 ```
 
@@ -97,6 +103,6 @@ zmq-project-management/
 
 ## 版本与许可
 
-当前 v1.1（2026-07-17），修订历史见 `zmq-project-management/CHANGELOG.md`。本地定制建议 fork 后自立版本线，升级时对照 CHANGELOG 合并。
+当前 v1.2（2026-07-17），修订历史见 `zmq-project-management/CHANGELOG.md`。本地定制建议 fork 后自立版本线，升级时对照 CHANGELOG 合并。
 
 本仓库以 [Apache License 2.0](LICENSE) 开源，允许商用与修改。
