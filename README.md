@@ -87,7 +87,12 @@ zmq-project-management/
   examples/
     示例项目/            规范落地形态的迷你示例（可对照颗粒度）
   CHANGELOG.md          版本记录
+evals/
+  README.md             评估套件：4 场景+陷阱题+期望行为清单+实测结论
+  build_fixtures.py     评估夹具一键生成器
 ```
+
+改版后建议至少复跑 evals 的 S4 陷阱场景做回归（方法见 [evals/README.md](evals/README.md)）。
 
 ## 建议自定义的点
 
@@ -103,6 +108,6 @@ zmq-project-management/
 
 ## 版本与许可
 
-当前 v1.2（2026-07-17），修订历史见 `zmq-project-management/CHANGELOG.md`。本地定制建议 fork 后自立版本线，升级时对照 CHANGELOG 合并。
+当前 v1.3（2026-07-20），修订历史见 `zmq-project-management/CHANGELOG.md`；规则变更均经 evals 实测回归。本地定制建议 fork 后自立版本线，升级时对照 CHANGELOG 合并。
 
 本仓库以 [Apache License 2.0](LICENSE) 开源，允许商用与修改。
