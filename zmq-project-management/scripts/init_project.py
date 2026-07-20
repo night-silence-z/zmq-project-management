@@ -9,10 +9,9 @@
                                   [--minimal] [--no-bootstrap]
 
 行为:
-    - 在 base（默认当前目录）下创建 项目名/ 及基础 4 目录：
-        00_管理/（README.md + 台账.md 骨架）、01_产出/当前/、01_产出/历史/、
-        02_输入/、99_归档/
-    - --minimal 只建 00_管理/ 与 01_产出/（轻量项目）。
+    - 在 base（默认当前目录）下创建 项目名/：默认只建 00_管理/（README.md +
+      台账.md 骨架）与 01_产出/当前/、01_产出/历史/——空目录不建；
+      --full 才追加 02_输入/、99_归档/。
     - --type 追加领域扩展：
         分析 -> 03_数据/ 04_脚本/ 00_管理/口径字典.md
         开发 -> 03_验收记录/ 00_管理/契约清单.md
@@ -105,7 +104,7 @@ def main():
     ap.add_argument("name", help="项目名（将作为目录名）")
     ap.add_argument("--base", default=".", help="工作区目录，默认当前目录")
     ap.add_argument("--type", choices=sorted(TYPE_EXTENSIONS), help="领域扩展：分析/开发/汇报")
-    ap.add_argument("--minimal", action="store_true", help="只建 00_管理 与 01_产出")
+    ap.add_argument("--full", action="store_true", help="追加创建 02_输入 与 99_归档（默认不建空目录）")
     ap.add_argument("--no-bootstrap", action="store_true", help="不写 CLAUDE.md/AGENTS.md 自举行")
     args = ap.parse_args()
 
@@ -119,7 +118,7 @@ def main():
     created = []
 
     dirs = ["00_管理", "01_产出/当前", "01_产出/历史"]
-    if not args.minimal:
+    if args.full:
         dirs += ["02_输入", "99_归档"]
     if args.type:
         dirs += TYPE_EXTENSIONS[args.type]["dirs"]
