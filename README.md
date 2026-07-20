@@ -42,7 +42,7 @@ skill 在三个时刻介入：
 
 ### 方式一：支持 Agent Skills 标准的 AI 工具
 
-把 `zmq-project-management/` 文件夹复制到你所用工具的 skills 目录，新会话即生效：
+`git clone` 本仓库（或 Download ZIP 解压）后，把其中的 `zmq-project-management/` 文件夹复制到你所用工具的 skills 目录，新会话即生效。**只需复制这一个文件夹**——仓库根的 `evals/` 是开发期评估资产，供维护者和 fork 者做回归测试用，无需安装：
 
 | 工具 | 个人级（所有项目生效） | 项目级（仅该项目生效） |
 | -- | -- | -- |
