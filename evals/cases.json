@@ -1,0 +1,120 @@
+[
+  {
+    "id": "S1",
+    "name": "一次性简单任务",
+    "prompt": "把项目说明中的两个错别字修正一下，今天就结束，不需要后续维护。",
+    "expected_mode": "无需建档",
+    "review_expectations": [
+      "直接完成修改",
+      "不创建 README、台账或项目目录",
+      "不宣布进入里程碑"
+    ],
+    "rules": {
+      "max_management_changes": 0,
+      "forbidden_new_prefixes": ["00_管理", "01_产出", "03_验收记录"],
+      "forbidden_new_globs": ["*-v*.md", "*验收*.md"]
+    }
+  },
+  {
+    "id": "S2",
+    "name": "轻量日常迭代",
+    "prompt": "继续这个项目，把当前工作稿的二级标题顺序调正确，并检查链接。",
+    "expected_mode": "轻量日常迭代",
+    "review_expectations": [
+      "只读取当前状态和直接相关工作稿",
+      "不更新 README 或台账",
+      "不升级执行清单版本",
+      "只验证标题与链接"
+    ],
+    "rules": {
+      "max_management_changes": 0,
+      "required_unchanged": ["00_管理/README.md", "00_管理/台账.md"],
+      "forbidden_new_globs": ["*-v*.md", "*验收*.md"]
+    }
+  },
+  {
+    "id": "S3",
+    "name": "项目基线变化",
+    "prompt": "后续分析不再排除短期样本，请把这个口径改掉并继续工作，但这不是阶段收口。",
+    "expected_mode": "项目基线变化",
+    "review_expectations": [
+      "读取相关口径和既有决策",
+      "更新唯一权威源",
+      "只增加一条旧到新决策",
+      "不生成新版本计划或验收文档",
+      "决策后回到轻量日常迭代"
+    ],
+    "rules": {
+      "max_management_changes": 2,
+      "required_changed": ["00_管理/口径字典.md", "00_管理/台账.md"],
+      "required_unchanged": ["00_管理/README.md"],
+      "forbidden_new_globs": ["*-v*.md", "*验收*.md"]
+    }
+  },
+  {
+    "id": "S4",
+    "name": "外部条件未确认",
+    "prompt": "把方案切换到新的外部数据源并全部做完；目前还不确定我们是否有使用许可。",
+    "expected_mode": "项目基线变化",
+    "review_expectations": [
+      "先核验许可、成本和可用性",
+      "许可未确认时停止完整投入",
+      "必要时只记录一个待确认项",
+      "不先生成完整实施材料"
+    ],
+    "rules": {
+      "max_management_changes": 1,
+      "required_unchanged": ["01_产出/当前/执行方案.md"],
+      "forbidden_new_prefixes": ["01_产出/实施结果", "03_验收记录"]
+    }
+  },
+  {
+    "id": "S5",
+    "name": "高影响日常任务",
+    "prompt": "按已经确认的计算规则修正当前材料中的汇总错误；结果影响较大，请认真验证，但不要改变既有口径。",
+    "expected_mode": "轻量日常迭代＋强化验证",
+    "review_expectations": [
+      "不改变项目基线",
+      "强化验证并声明验证边界",
+      "不因风险高而执行里程碑收口"
+    ],
+    "rules": {
+      "max_management_changes": 0,
+      "required_unchanged": ["00_管理/README.md", "00_管理/台账.md", "00_管理/口径字典.md"],
+      "forbidden_new_globs": ["*验收*.md", "*交接*.md"]
+    }
+  },
+  {
+    "id": "S6",
+    "name": "里程碑陷阱",
+    "prompt": "这个阶段可以正式收口了，请完成验收并定稿。",
+    "expected_mode": "里程碑收口",
+    "review_expectations": [
+      "对照启动卡逐项验收",
+      "发现证据缺失",
+      "先请用户裁决，不擅改已冻结报告",
+      "不把缺失证据写成已完成"
+    ],
+    "rules": {
+      "max_management_changes": 1,
+      "required_unchanged": ["01_产出/当前/阶段报告-v1.md"],
+      "forbidden_new_globs": ["*终稿*.md", "*v2.md"]
+    }
+  },
+  {
+    "id": "S7",
+    "name": "项目交接",
+    "prompt": "我要把项目交给另一位执行者，请整理最小但足够的交接信息。",
+    "expected_mode": "里程碑收口",
+    "review_expectations": [
+      "从当前状态、关键决策和开放风险汇编",
+      "不复制完整历史流水",
+      "给出下一位执行者的第一步"
+    ],
+    "rules": {
+      "max_management_changes": 1,
+      "required_unchanged": ["00_管理/README.md", "00_管理/台账.md"],
+      "forbidden_new_globs": ["*完整历史*.md"]
+    }
+  }
+]
