@@ -1,120 +1,102 @@
 #!/usr/bin/env python3
-"""口径/禁用词一致性扫描器（zmq-project-management）
+"""扫描当前材料中的禁用词或旧定义残留。
 
-对应 SKILL.md 第 6 节"交付前机器扫描"：从权威源文件中读取禁用词表，
-扫描产出目录，报告所有命中位置。定义只在权威源出现一次，产出只引用——
-本脚本负责抓"旧口径/禁用词残留"这类机器可查的漂移。
-
-用法:
-    python check_terms.py --authority 00_管理/术语与红线.md --target 01_产出
-    python check_terms.py --authority 00_管理/口径字典.md --target 01_产出 --ext .md .html
-
-权威源约定: 文件中包含表头含「禁用词」和「应使用」两列的 Markdown 表格，例如:
-
-    | 禁用词 | 应使用 |
-    | -- | -- |
-    | 诊断分 | （不引入该指标，用行为/转化口径直接解释） |
-    | 自然渠道 | 自然流量 |
-
-行为:
-    - 递归扫描 target 下的文本文件（默认 .md/.html/.txt），报告 文件:行号 与命中词。
-    - 默认跳过归档与历史目录（99_归档、历史），旧版本合法保留旧口径；
-      加 --include-archived 可强制包含。
-    - 有命中 -> 退出码 1（可接入 CI）；无命中 -> 退出码 0。
-
-仅用标准库，Python 3.8+。
+仅在相关权威源变化或正式交付时按需运行，不作为日常收尾动作。
 """
 
 import argparse
 import pathlib
 import sys
 
-DEFAULT_EXTS = [".md", ".html", ".txt"]
-SKIP_DIR_KEYWORDS = ["99_归档", "历史", ".git", "node_modules"]
+
+DEFAULT_EXTENSIONS = [".md", ".html", ".txt"]
+SKIP_PARTS = {"99_归档", "历史", ".git", "node_modules"}
 
 
-def parse_forbidden_table(authority: pathlib.Path):
-    """从权威源提取 (禁用词, 应使用) 列表。"""
+def parse_forbidden_table(authority):
     rows = []
-    in_table, term_idx, repl_idx = False, None, None
+    headers = None
     for raw in authority.read_text(encoding="utf-8", errors="replace").splitlines():
         line = raw.strip()
         if line.startswith("|") and "禁用词" in line:
-            headers = [c.strip() for c in line.strip("|").split("|")]
-            if "禁用词" in headers:
-                term_idx = headers.index("禁用词")
-                repl_idx = headers.index("应使用") if "应使用" in headers else None
-                in_table = True
+            headers = [cell.strip() for cell in line.strip("|").split("|")]
             continue
-        if in_table:
-            if not line.startswith("|"):
-                in_table = False
-                continue
-            cells = [c.strip() for c in line.strip("|").split("|")]
-            if all(set(c) <= set("-: ") for c in cells):  # 分隔行
-                continue
-            if term_idx is not None and term_idx < len(cells) and cells[term_idx]:
-                repl = cells[repl_idx] if repl_idx is not None and repl_idx < len(cells) else ""
-                rows.append((cells[term_idx], repl))
+        if headers is None:
+            continue
+        if not line.startswith("|"):
+            headers = None
+            continue
+        cells = [cell.strip() for cell in line.strip("|").split("|")]
+        if all(set(cell) <= set("-: ") for cell in cells):
+            continue
+        term_index = headers.index("禁用词")
+        replacement_index = headers.index("应使用") if "应使用" in headers else None
+        if term_index < len(cells) and cells[term_index]:
+            replacement = (
+                cells[replacement_index]
+                if replacement_index is not None and replacement_index < len(cells)
+                else ""
+            )
+            rows.append((cells[term_index], replacement))
     return rows
 
 
-def iter_target_files(target: pathlib.Path, exts, include_archived: bool):
-    if target.is_file():
-        yield target
-        return
-    for p in sorted(target.rglob("*")):
-        if not p.is_file() or p.suffix.lower() not in exts:
+def iter_files(target, extensions, include_archived):
+    candidates = [target] if target.is_file() else sorted(target.rglob("*"))
+    for path in candidates:
+        if not path.is_file() or path.suffix.lower() not in extensions:
             continue
-        if not include_archived and any(k in str(p) for k in SKIP_DIR_KEYWORDS):
+        if not include_archived and any(part in SKIP_PARTS for part in path.parts):
             continue
-        yield p
+        yield path
 
 
 def main():
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
-    ap = argparse.ArgumentParser(description="扫描产出中的禁用词/旧口径残留")
-    ap.add_argument("--authority", required=True, help="权威源文件（含'禁用词|应使用'表）")
-    ap.add_argument("--target", required=True, help="要扫描的文件或目录")
-    ap.add_argument("--ext", nargs="*", default=DEFAULT_EXTS, help="扫描的扩展名，默认 .md .html .txt")
-    ap.add_argument("--include-archived", action="store_true", help="包含 99_归档/历史 目录（默认跳过）")
-    args = ap.parse_args()
 
-    authority = pathlib.Path(args.authority)
-    target = pathlib.Path(args.target)
+    parser = argparse.ArgumentParser(description="扫描禁用词和旧定义残留")
+    parser.add_argument("--authority", required=True, help="含禁用词表的权威源")
+    parser.add_argument("--target", required=True, help="要扫描的当前材料")
+    parser.add_argument("--ext", nargs="*", default=DEFAULT_EXTENSIONS)
+    parser.add_argument("--include-archived", action="store_true")
+    args = parser.parse_args()
+
+    authority = pathlib.Path(args.authority).resolve()
+    target = pathlib.Path(args.target).resolve()
     if not authority.is_file():
-        print(f"[错误] 权威源不存在: {authority}")
+        print(f"[错误] 权威源不存在：{authority}")
         return 2
     if not target.exists():
-        print(f"[错误] 扫描目标不存在: {target}")
+        print(f"[错误] 扫描目标不存在：{target}")
         return 2
 
     forbidden = parse_forbidden_table(authority)
     if not forbidden:
-        print(f"[提示] 权威源中未找到'禁用词|应使用'表，无可扫描项: {authority}")
+        print(f"[提示] 未找到“禁用词｜应使用”表：{authority}")
         return 0
 
-    exts = [e.lower() if e.startswith(".") else "." + e.lower() for e in args.ext]
+    extensions = {
+        extension.lower() if extension.startswith(".") else "." + extension.lower()
+        for extension in args.ext
+    }
     hits = 0
-    for f in iter_target_files(target, exts, args.include_archived):
-        if f.resolve() == authority.resolve():
-            continue  # 权威源自身合法包含禁用词
-        for lineno, line in enumerate(
-            f.read_text(encoding="utf-8", errors="replace").splitlines(), 1
+    for path in iter_files(target, extensions, args.include_archived):
+        if path.resolve() == authority:
+            continue
+        for line_number, line in enumerate(
+            path.read_text(encoding="utf-8", errors="replace").splitlines(), 1
         ):
-            for term, repl in forbidden:
+            for term, replacement in forbidden:
                 if term in line:
                     hits += 1
-                    tip = f"（应使用：{repl}）" if repl else ""
-                    print(f"{f}:{lineno}: 命中禁用词「{term}」{tip}")
-                    print(f"    {line.strip()[:120]}")
+                    tip = f"；应使用：{replacement}" if replacement else ""
+                    print(f"{path}:{line_number}: 命中「{term}」{tip}")
 
-    print("-" * 40)
     if hits:
-        print(f"共 {hits} 处命中，需清理后再交付。")
+        print(f"共 {hits} 处命中。")
         return 1
-    print(f"通过：{len(forbidden)} 个禁用词，0 命中。")
+    print(f"通过：检查 {len(forbidden)} 个禁用词，0 命中。")
     return 0
 
 
