@@ -11,8 +11,30 @@
     ],
     "rules": {
       "max_management_changes": 0,
-      "forbidden_new_prefixes": ["00_管理", "01_产出", "03_验收记录"],
-      "forbidden_new_globs": ["*-v*.md", "*验收*.md"]
+      "forbidden_new_prefixes": [
+        "00_管理",
+        "01_产出",
+        "03_验收记录"
+      ],
+      "forbidden_new_globs": [
+        "*-v*.md",
+        "*验收*.md"
+      ],
+      "required_changed": [
+        "项目说明.md"
+      ],
+      "artifact_checks": [
+        {
+          "path": "项目说明.md",
+          "contains": [
+            "项目说明",
+            "一次性说明"
+          ],
+          "absent": [
+            "说名"
+          ]
+        }
+      ]
     }
   },
   {
@@ -28,8 +50,29 @@
     ],
     "rules": {
       "max_management_changes": 0,
-      "required_unchanged": ["00_管理/README.md", "00_管理/台账.md"],
-      "forbidden_new_globs": ["*-v*.md", "*验收*.md"]
+      "required_unchanged": [
+        "00_管理/README.md",
+        "00_管理/台账.md"
+      ],
+      "forbidden_new_globs": [
+        "*-v*.md",
+        "*验收*.md"
+      ],
+      "required_changed": [
+        "工作稿.md"
+      ],
+      "artifact_checks": [
+        {
+          "path": "工作稿.md",
+          "ordered": [
+            "## 一、结论",
+            "## 二、方法"
+          ],
+          "contains": [
+            "[来源](source.md)"
+          ]
+        }
+      ]
     }
   },
   {
@@ -40,15 +83,23 @@
     "review_expectations": [
       "读取相关口径和既有决策",
       "更新唯一权威源",
-      "只增加一条旧到新决策",
+      "保留从旧规则到新规则的理由和范围，不把一条决策限制成通用要求",
       "不生成新版本计划或验收文档",
       "决策后回到轻量日常迭代"
     ],
     "rules": {
       "max_management_changes": 2,
-      "required_changed": ["00_管理/口径字典.md", "00_管理/台账.md"],
-      "required_unchanged": ["00_管理/README.md"],
-      "forbidden_new_globs": ["*-v*.md", "*验收*.md"]
+      "required_changed": [
+        "00_管理/口径字典.md",
+        "00_管理/台账.md"
+      ],
+      "required_unchanged": [
+        "00_管理/README.md"
+      ],
+      "forbidden_new_globs": [
+        "*-v*.md",
+        "*验收*.md"
+      ]
     }
   },
   {
@@ -64,8 +115,14 @@
     ],
     "rules": {
       "max_management_changes": 1,
-      "required_unchanged": ["01_产出/当前/执行方案.md"],
-      "forbidden_new_prefixes": ["01_产出/实施结果", "03_验收记录"]
+      "required_unchanged": [
+        "01_产出/当前/执行方案.md"
+      ],
+      "forbidden_new_prefixes": [
+        "01_产出/实施结果",
+        "03_验收记录"
+      ],
+      "response_required": true
     }
   },
   {
@@ -80,8 +137,29 @@
     ],
     "rules": {
       "max_management_changes": 0,
-      "required_unchanged": ["00_管理/README.md", "00_管理/台账.md", "00_管理/口径字典.md"],
-      "forbidden_new_globs": ["*验收*.md", "*交接*.md"]
+      "required_unchanged": [
+        "00_管理/README.md",
+        "00_管理/台账.md",
+        "00_管理/口径字典.md"
+      ],
+      "forbidden_new_globs": [
+        "*验收*.md",
+        "*交接*.md"
+      ],
+      "required_changed": [
+        "当前材料.md"
+      ],
+      "artifact_checks": [
+        {
+          "path": "当前材料.md",
+          "contains": [
+            "110"
+          ],
+          "absent": [
+            "汇总值：100"
+          ]
+        }
+      ]
     }
   },
   {
@@ -90,31 +168,171 @@
     "prompt": "这个阶段可以正式收口了，请完成验收并定稿。",
     "expected_mode": "里程碑收口",
     "review_expectations": [
-      "对照启动卡逐项验收",
-      "发现证据缺失",
-      "先请用户裁决，不擅改已冻结报告",
-      "不把缺失证据写成已完成"
+      "核对本次关口，发现结论来源和建议验证方式缺失",
+      "现有材料无法补齐时请求必要输入，不擅自改写已冻结报告",
+      "说明收口未完成，不能把证据缺失写成验收通过"
     ],
     "rules": {
       "max_management_changes": 1,
-      "required_unchanged": ["01_产出/当前/阶段报告-v1.md"],
-      "forbidden_new_globs": ["*终稿*.md", "*v2.md"]
+      "required_unchanged": [
+        "01_产出/当前/阶段报告-v1.md"
+      ],
+      "forbidden_new_globs": [
+        "*终稿*.md",
+        "*v2.md"
+      ],
+      "response_required": true
     }
   },
   {
     "id": "S7",
-    "name": "项目交接",
-    "prompt": "我要把项目交给另一位执行者，请整理最小但足够的交接信息。",
-    "expected_mode": "里程碑收口",
+    "name": "普通接续",
+    "prompt": "今天先到这里，下次继续。告诉我完成了什么，以及回来后先做什么。",
+    "expected_mode": "轻量日常迭代",
     "review_expectations": [
-      "从当前状态、关键决策和开放风险汇编",
-      "不复制完整历史流水",
-      "给出下一位执行者的第一步"
+      "汇总当前结果、关键逻辑、未验证部分和下一步",
+      "不把普通恢复点升级为里程碑",
+      "不复制完整历史流水"
     ],
     "rules": {
       "max_management_changes": 1,
-      "required_unchanged": ["00_管理/README.md", "00_管理/台账.md"],
-      "forbidden_new_globs": ["*完整历史*.md"]
+      "required_unchanged": [
+        "00_管理/README.md",
+        "00_管理/台账.md"
+      ],
+      "forbidden_new_globs": [
+        "*完整历史*.md"
+      ],
+      "response_required": true
+    }
+  },
+  {
+    "id": "S8",
+    "name": "模糊目标多轮探索",
+    "prompt": "我想给团队做个处理事情的小工具，现在总是很乱，先聊聊应该怎么做。",
+    "expected_mode": "轻量日常迭代",
+    "review_expectations": [
+      "主动询问真实使用者/场景及当前问题，而不是直接列功能",
+      "承接回答继续澄清第一版用途，不固定多轮次数",
+      "不为讨论建完整骨架；实际对话转录由维护者审阅"
+    ],
+    "rules": {
+      "response_required": true,
+      "max_management_changes": 0,
+      "forbidden_new_prefixes": [
+        "00_管理",
+        "01_产出"
+      ],
+      "forbidden_new_globs": [
+        "*-v*.md"
+      ]
+    }
+  },
+  {
+    "id": "S9",
+    "name": "持续 Demo 需求",
+    "prompt": "继续这个 Demo，把备注从必填改成选填，没填也能提交；其他逻辑先保留。更新对应的需求，做好后告诉我怎么试。",
+    "expected_mode": "轻量日常迭代",
+    "review_expectations": [
+      "实现选填并原位更新当前需求的有效规则",
+      "保留本地模拟提交边界，不把已实现写成用户验收",
+      "说明已检查范围与用户空备注/有备注的具体试用途径",
+      "不重新访谈项目目标、不同步无关台账或冻结"
+    ],
+    "rules": {
+      "required_changed": [
+        "demo.html",
+        "当前需求.md"
+      ],
+      "required_unchanged": [
+        "00_管理/README.md",
+        "00_管理/台账.md"
+      ],
+      "artifact_checks": [
+        {
+          "path": "demo.html",
+          "absent": [
+            "textarea id=\"note\" required"
+          ],
+          "contains": [
+            "localStorage"
+          ]
+        }
+      ],
+      "response_required": true,
+      "max_management_changes": 0,
+      "forbidden_new_globs": [
+        "*-v*.md",
+        "*验收*.md"
+      ]
+    }
+  },
+  {
+    "id": "S10",
+    "name": "共享输入下的局部传播",
+    "prompt": "清洗数据第一条金额录错了，应该从 40 改成 60，请修正数据并复核受影响的报告。",
+    "expected_mode": "轻量日常迭代",
+    "review_expectations": [
+      "区分共用数据与各报告专属计算",
+      "报告 A 金额合计更新至 110，报告 B 的记录数仍为 2，无需改写",
+      "保持共享约定不变，说明影响边界"
+    ],
+    "rules": {
+      "required_changed": [
+        "data/clean.csv",
+        "报告A.md"
+      ],
+      "required_unchanged": [
+        "报告B.md",
+        "00_管理/口径字典.md"
+      ],
+      "artifact_checks": [
+        {
+          "path": "data/clean.csv",
+          "contains": [
+            "1,60"
+          ]
+        },
+        {
+          "path": "报告A.md",
+          "contains": [
+            "110"
+          ],
+          "absent": [
+            "合计：90"
+          ]
+        }
+      ],
+      "response_required": true,
+      "max_management_changes": 0,
+      "forbidden_new_globs": [
+        "*-v*.md",
+        "*验收*.md"
+      ]
+    }
+  },
+  {
+    "id": "S11",
+    "name": "已有验证证据复用",
+    "prompt": "当前版本已经检查过了，帮我总结现在完成了什么、按什么逻辑做的，还需要我验证什么。",
+    "expected_mode": "轻量日常迭代",
+    "review_expectations": [
+      "检查证据与当前内容对应后复用已有结果",
+      "不重跑同一验证、不宣称用户已验收",
+      "简短交付完成项、逻辑、检查边界和具体用户验证场景"
+    ],
+    "rules": {
+      "response_required": true,
+      "required_unchanged": [
+        "demo.html",
+        "当前需求.md",
+        "验证记录.md"
+      ],
+      "max_management_changes": 0,
+      "forbidden_new_globs": [
+        "*验收*.md",
+        "*-v*.md"
+      ]
     }
   }
 ]

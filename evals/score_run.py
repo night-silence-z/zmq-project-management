@@ -34,18 +34,22 @@ def load_case(case_id):
 
 
 def main():
-    if hasattr(sys.stdout, "reconfigure"):
-        sys.stdout.reconfigure(encoding="utf-8")
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser(description="评分三级治理行为 eval")
     parser.add_argument("--case", required=True, help="场景 ID，如 S2")
     parser.add_argument("--before", required=True)
     parser.add_argument("--after", required=True)
+    parser.add_argument("--response", help="代理实际回复/对话转录文件；行为判断仍需人工审阅")
     args = parser.parse_args()
 
     case = load_case(args.case)
     rules = case.get("rules", {})
     before_root = pathlib.Path(args.before).resolve()
     after_root = pathlib.Path(args.after).resolve()
+    if not before_root.is_dir() or not after_root.is_dir():
+        parser.error("before 和 after 必须是存在的场景目录")
     before = snapshot(before_root)
     after = snapshot(after_root)
 
@@ -55,11 +59,36 @@ def main():
     failures = []
 
     for path in rules.get("required_changed", []):
-        if path not in changed:
+        if path not in changed or path not in after:
             failures.append(f"应修改但未修改：{path}")
     for path in rules.get("required_unchanged", []):
-        if path in changed:
-            failures.append(f"应保持不变：{path}")
+        if path in changed or path not in before or path not in after:
+            failures.append(f"应保持不变且存在：{path}")
+
+    if rules.get("response_required"):
+        response = pathlib.Path(args.response) if args.response else None
+        if not response or not response.is_file() or not response.read_text(encoding="utf-8").strip():
+            failures.append("缺少实际回复/对话转录，无法审阅交付或澄清行为")
+
+    for check in rules.get("artifact_checks", []):
+        path = after_root / check["path"]
+        if not path.is_file():
+            failures.append(f"缺少产物：{check['path']}")
+            continue
+        content = path.read_text(encoding="utf-8")
+        for fragment in check.get("contains", []):
+            if fragment not in content:
+                failures.append(f"产物缺少结果 {fragment!r}：{check['path']}")
+        for fragment in check.get("absent", []):
+            if fragment in content:
+                failures.append(f"产物仍含已失效内容 {fragment!r}：{check['path']}")
+        cursor = 0
+        for fragment in check.get("ordered", []):
+            found = content.find(fragment, cursor)
+            if found < 0:
+                failures.append(f"产物顺序不符 {fragment!r}：{check['path']}")
+                break
+            cursor = found + len(fragment)
 
     for prefix in rules.get("forbidden_changed_prefixes", []):
         for path in changed:
@@ -91,7 +120,9 @@ def main():
 
     result = {
         "case": case["id"],
-        "expected_mode": case["expected_mode"],
+        "review_reference_mode": case["expected_mode"],
+        "machine_checks_passed": not failures,
+        "behavior_review": "required: review actual response, artifacts and tool trace",
         "changed": changed,
         "new": new,
         "management_changes": management_changes,

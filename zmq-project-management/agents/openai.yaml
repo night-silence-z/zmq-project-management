@@ -1,4 +1,4 @@
 interface:
-  display_name: "自适应项目治理"
-  short_description: "按影响选择最小充分流程，保留决策、风险与交接"
-  default_prompt: "Use $zmq-project-management to govern this project with the lightest sufficient mode."
+  display_name: "自适应项目管理"
+  short_description: "主动澄清项目目标，持续沉淀需求，按影响管理多成果与验证"
+  default_prompt: "Use $zmq-project-management to clarify goals and preserve current requirements, decisions, and handoffs with the lightest sufficient workflow."

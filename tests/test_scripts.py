@@ -25,7 +25,7 @@ def run_script(*args):
 class ScriptTests(unittest.TestCase):
     def test_minimal_scaffold_creates_no_empty_delivery_dirs(self):
         with tempfile.TemporaryDirectory() as temp:
-            result = run_script(INIT, "demo", "--base", temp, "--bootstrap", "none")
+            result = run_script(INIT, "demo", "--base", temp)
             self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
             root = pathlib.Path(temp) / "demo"
             self.assertTrue((root / "00_管理" / "README.md").is_file())
@@ -33,6 +33,8 @@ class ScriptTests(unittest.TestCase):
             self.assertFalse((root / "01_产出").exists())
             self.assertFalse((root / "02_输入").exists())
             self.assertFalse((root / "99_归档").exists())
+            self.assertFalse((root / "AGENTS.md").exists())
+            self.assertFalse((root / "CLAUDE.md").exists())
 
     def test_profile_and_full_scaffold(self):
         with tempfile.TemporaryDirectory() as temp:
@@ -93,6 +95,71 @@ class ScriptTests(unittest.TestCase):
             )
             self.assertEqual(result.returncode, 1)
             self.assertIn("旧称", result.stdout)
+
+
+    def test_initializer_rejects_escape_and_nonempty_directory(self):
+        with tempfile.TemporaryDirectory() as temp:
+            self.assertEqual(run_script(INIT, "../escape", "--base", temp).returncode, 2)
+            root = pathlib.Path(temp) / "existing"
+            root.mkdir()
+            (root / "user.md").write_text("keep", encoding="utf-8")
+            self.assertEqual(run_script(INIT, "existing", "--base", temp).returncode, 2)
+            self.assertEqual((root / "user.md").read_text(), "keep")
+
+    def test_generic_authority_title(self):
+        with tempfile.TemporaryDirectory() as temp:
+            self.assertEqual(run_script(INIT, "demo", "--base", temp, "--type", "通用").returncode, 0)
+            text = (pathlib.Path(temp) / "demo/00_管理/基线说明.md").read_text(encoding="utf-8")
+            self.assertIn("基线说明", text)
+            self.assertNotIn("{{", text)
+
+    def test_health_uses_custom_index_without_requiring_ledger(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = pathlib.Path(temp)
+            (root / "index.md").write_text("# Existing index\n", encoding="utf-8")
+            result = run_script(HEALTH, root, "--readme", "index.md")
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_health_does_not_scan_unrelated_markdown(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = pathlib.Path(temp)
+            (root / "index.md").write_text("# index", encoding="utf-8")
+            (root / "unrelated.md").write_text("| a |\n\n| b |\n", encoding="utf-8")
+            result = run_script(HEALTH, root, "--readme", "index.md")
+            self.assertEqual(result.returncode, 0)
+            self.assertNotIn("表格行间", result.stdout)
+            result = run_script(HEALTH, root, "--readme", "index.md", "--target", "unrelated.md")
+            self.assertIn("表格行间", result.stdout)
+            self.assertEqual(run_script(HEALTH, root, "--readme", "index.md", "--target", ".").returncode, 2)
+
+    def test_health_allows_distinct_reports_and_external_pointer(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = pathlib.Path(temp)
+            current = root / "01_产出/当前"
+            current.mkdir(parents=True)
+            for name in ("A", "B"):
+                (current / (name + ".md")).write_text(name, encoding="utf-8")
+            (root / "ledger.md").write_text("# ledger", encoding="utf-8")
+            (root / "index.md").write_text(
+                "| 产出物线 | 当前版文件 | 状态 | 对应关系 |\n| -- | -- | -- | -- |\n"
+                "| A | [报告A](01_产出/当前/A.md) | 草稿待试用 | — |\n"
+                "| B | 01_产出/当前/B.md | 已核对来源 | — |\n"
+                "| C | https://example.com/report | 已交付 | — |\n", encoding="utf-8")
+            result = run_script(HEALTH, root, "--readme", "index.md", "--ledger", "ledger.md", "--level", "milestone")
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertNotIn("[警告]", result.stdout)
+            self.assertIn("未验证可访问性", result.stdout)
+
+    def test_health_reports_duplicate_current_pointer_for_same_artifact(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = pathlib.Path(temp)
+            (root / "A.md").write_text("A", encoding="utf-8")
+            (root / "index.md").write_text(
+                "| 产出物线 | 当前版文件 | 状态 | 对应关系 |\n| -- | -- | -- | -- |\n"
+                "| A | A.md | 草稿 | — |\n| A | A.md | 草稿 | — |\n", encoding="utf-8")
+            result = run_script(HEALTH, root, "--readme", "index.md")
+            self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+            self.assertIn("重复当前指针", result.stdout)
 
 
 if __name__ == "__main__":
