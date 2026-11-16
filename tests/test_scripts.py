@@ -29,7 +29,12 @@ class ScriptTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
             root = pathlib.Path(temp) / "demo"
             self.assertTrue((root / "00_管理" / "README.md").is_file())
-            self.assertTrue((root / "00_管理" / "台账.md").is_file())
+            ledger = (root / "00_管理" / "台账.md").read_text(encoding="utf-8")
+            # New ledgers have table headers, but no invented tasks, decisions or events.
+            tables = [block for block in ledger.split("\n\n") if block.startswith("|")]
+            self.assertTrue(tables)
+            for table in tables:
+                self.assertEqual(len(table.splitlines()), 2, table)  # header and separator only
             self.assertFalse((root / "01_产出").exists())
             self.assertFalse((root / "02_输入").exists())
             self.assertFalse((root / "99_归档").exists())
